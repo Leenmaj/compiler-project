@@ -5,8 +5,8 @@
 %option yylineno 
 
 %%
-[ \t\n]+ ; /* Ignore whitespace */
-
+[ \t]+  ; /* Ignore whitespace */
+\n      ;/*to update yylineno*/
 "program"       return PROGRAM;
 "beginprogram"  return BEGIN_PROGRAM;
 "endprogram"    return END_PROGRAM;
@@ -48,6 +48,7 @@
 "("             return L_PAREN;
 ")"             return R_PAREN;
 ":="            return ASSIGN;
+
 
 
 %%
