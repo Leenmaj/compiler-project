@@ -10,12 +10,37 @@ ws {delim}+
 
 %%
 
-
-{ws} {/* no action and no return */}
-"--".*    { /* ignore   comments}
 "program" return PROGRAM;
-"if" return IF;
 "endprogram" return END_PROGRAM;
+"integer"              { return INTEGER; }
+"array"                { return ARRAY; }
+"of"                   { return OF; }
+"if"                   {return IF;}
+"then"                 { return THEN; }
+"endif"                { return ENDIF; }
+"else"                 { return ELSE; }
+"while"                { return WHILE; }
+"loop"                 { return LOOP; }
+"endloop"              { return ENDLOOP; }
+"read"                 { return READ; }
+"write"                { return WRITE; }
+
+"+"                   { return PLUS; }
+"-"                   { return MINUS; }
+"*"                   { return MULT; }
+"/"                   { return DIV; }
+
+"="                   { return EQUAL; }
+"=="                  { return EQ; }
+"<>"                  { return NEQ; }
+"<"                   { return LT; }
+"<="                  { return LE; }
+">"                   { return GT; }
+">="                  { return GE; }
+"("                   { return LPAREN; }
+")"                   { return RPAREN; }
+";"                   { return SEMICOLON; }
+":="                  { return ASSIGN; }
 
 
 %%
