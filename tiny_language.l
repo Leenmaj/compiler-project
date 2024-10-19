@@ -40,7 +40,6 @@ ws {delim}+
 "/"             return DIV;
 
 "="             return EQUAL;
-"=="            return EQ;
 "<>"            return NEQ;
 "<"             return LT;
 "<="            return LE;
