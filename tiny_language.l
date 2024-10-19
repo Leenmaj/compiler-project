@@ -1,9 +1,8 @@
 %{
 #include "tiny_language.tab.h"
-
-
 %}
-
+/* KEEP TRACK OF LINE NUMBER*/
+%option yylineno 
 
 %%
 [ \t\n]+ ; /* Ignore whitespace */
