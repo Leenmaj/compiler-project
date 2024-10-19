@@ -9,7 +9,7 @@ ws {delim}+
 
 
 %%
-
+{ws} {/* no action and no return */}
 "program" return PROGRAM;
 "endprogram" return END_PROGRAM;
 "integer"              { return INTEGER; }
