@@ -1,57 +1,66 @@
 %{
 #include "tiny_language.tab.h"
+int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
+
 %}
 /* KEEP TRACK OF LINE NUMBER*/
 %option yylineno 
 
 %%
-[ \t]+  ; /* Ignore whitespace */
-\n      ;/*to update yylineno*/
-"program"       return PROGRAM;
-"beginprogram"  return BEGIN_PROGRAM;
-"endprogram"    return END_PROGRAM;
-"integer"       return INTEGER;
-"array"         return ARRAY;
-"of"            return OF;
-"if"            return IF;
-"then"          return THEN;
-"endif"         return ENDIF;
-"else"          return ELSE;
-"while"         return WHILE;
-"loop"          return LOOP;
-"endloop"       return ENDLOOP;
-"read"          return READ;
-"write"         return WRITE;
-"and"           return AND;     
-"or"            return OR;     
-"not"           return NOT;     
-"true"          return TRUE;   
-"false"         return FALSE;  
 
+"program"       { column += yyleng; return PROGRAM; }
+"beginprogram"  { column += yyleng; return BEGIN_PROGRAM; }
+"endprogram"    { column += yyleng; return END_PROGRAM; }
+"integer"       { column += yyleng; return INTEGER; }
+"array"         { column += yyleng; return ARRAY; }
+"of"            { column += yyleng; return OF; }
+"if"            { column += yyleng; return IF; }
+"then"          { column += yyleng; return THEN; }
+"endif"         { column += yyleng; return ENDIF; }
+"else"          { column += yyleng; return ELSE; }
+"while"         { column += yyleng; return WHILE; }
+"loop"          { column += yyleng; return LOOP; }
+"endloop"       { column += yyleng; return ENDLOOP; }
+"read"          { column += yyleng; return READ; }
+"write"         { column += yyleng; return WRITE; }
+"and"           { column += yyleng; return AND; }     
+"or"            { column += yyleng; return OR; }     
+"not"           { column += yyleng; return NOT; }     
+"true"          { column += yyleng; return TRUE; }   
+"false"         { column += yyleng; return FALSE; }  
 
+"-"             { column++; return SUB; }
+"+"             { column++; return ADD; }
+"*"             { column++; return MULT; }
+"/"             { column++; return DIV; }
 
-"-"             return MINUS;
-"+"             return PLUS;
-"*"             return MULT;
-"/"             return DIV;
+"="             { column++; return EQ; }
+"<>"            { column += 2; return NEQ; }
+"<"             { column++; return LT; }
+">"             { column++; return GT; }
+"<="            { column += 2; return LTE; }
+">="            { column += 2; return GTE; }
 
-"="             return EQUAL;
-"<>"            return NEQ;
-"<"             return LT;
-">"             return GT;
-"<="            return LTE;
-">="            return GTE;
+";"             { column++; return SEMICOLON; }
+":"             { column++; return COLON; }
+","             { column++; return COMMA; }
+"("             { column++; return L_PAREN; }
+")"             { column++; return R_PAREN; }
+":="            { column += 2; return ASSIGN; }
 
-";"             return SEMICOLON;
-":"             return COLON;
-","             return COMMA;
-"("             return L_PAREN;
-")"             return R_PAREN;
-":="            return ASSIGN;
+[ \t]+          { column += yyleng; }  /* Ignore whitespace just update column */
+\n              { column = 0;}  /*  reset column number */
+
+.       {
+    fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
+    exit(1);  /*    exit the program */
+}
 
 
 
 %%
+
+
 
 
 int yywrap() {
@@ -60,6 +69,3 @@ int yywrap() {
 
 
 
-
-
-%%
