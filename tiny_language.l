@@ -3,13 +3,10 @@
 
 
 %}
-/* regular definitions */
-delim [ \t\n]
-ws {delim}+
 
 
 %%
-{ws} {/* no action and no return */}
+[ \t\n]+ ; /* Ignore whitespace */
 
 "program"       return PROGRAM;
 "beginprogram"  return BEGIN_PROGRAM;
@@ -42,9 +39,9 @@ ws {delim}+
 "="             return EQUAL;
 "<>"            return NEQ;
 "<"             return LT;
-"<="            return LE;
 ">"             return GT;
-">="            return GE;
+"<="            return LTE;
+">="            return GTE;
 
 ";"             return SEMICOLON;
 ":"             return COLON;
