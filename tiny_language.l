@@ -7,7 +7,7 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 %option yylineno 
 
 %%
-
+"--"[^\n]* { column += yyleng; } // ignore comment
 "program"       { column += yyleng; printf("PROGRAM\n"); }
 "beginprogram"  { column += yyleng; printf("BEGIN_PROGRAM\n"); }
 "endprogram"    { column += yyleng; printf("END_PROGRAM\n"); }
@@ -29,6 +29,14 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 "true"          { column += yyleng; printf("TRUE\n"); }   
 "false"         { column += yyleng; printf("FALSE\n"); }   
 
+[a-zA-Z][a-zA-Z0-9_]{0,7}   {
+    printf("IDENT %s\n", yytext);
+    column += yyleng;
+}
+[0-9]+   {
+    printf("NUMBER %s\n", yytext);
+    column += yyleng;
+}
 
 "-"             { printf("SUB\n"); }
 "+"             { printf("ADD\n"); }
@@ -57,7 +65,6 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
     fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
     exit(1);  /*    exit the program */
 }
-return
 
 
 %%
