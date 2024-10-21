@@ -40,21 +40,21 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" must begin with a letter\n", yylineno, column, yytext);
 
-    /*exit(1);*/
+    exit(1);
 }
 
 "_"[a-zA-Z0-9_]*[a-zA-Z] {
 
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot start with an underscore\n", yylineno, column, yytext);
 
-    /*exit(1);*/
+    exit(1);
 }
 
 [a-zA-Z][a-zA-Z0-9_]*"_" {
 
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot end with an underscore\n", yylineno, column, yytext);
 
-   /* exit(1);*/
+    exit(1);
 }
 
 
@@ -90,7 +90,7 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 . {
     fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
     printf(yytext);
-    /*exit(1);*/  /*    exit the program */
+    exit(1);  /*    exit the program */
 }
 
 
