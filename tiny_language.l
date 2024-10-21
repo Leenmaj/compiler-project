@@ -89,7 +89,6 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 
 . {
     fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
-    printf(yytext);
     exit(1);  /*    exit the program */
 }
 
