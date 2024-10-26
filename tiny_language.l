@@ -29,10 +29,41 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 "true"          { column += yyleng; printf("TRUE\n"); }   
 "false"         { column += yyleng; printf("FALSE\n"); }   
 
-[a-zA-Z][a-zA-Z0-9_]{0,7}   {
-    printf("IDENT %s\n", yytext);
+
+
+[a-zA-Z]([a-zA-Z0-9_]{0,6}[a-zA-Z0-9])?   {     printf("IDENT %s\n", yytext);
     column += yyleng;
 }
+
+
+[0-9][a-zA-Z0-9_]*[a-zA-Z] {
+
+    fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" must begin with a letter\n", yylineno, column, yytext);
+
+    exit(1);
+}
+
+"_"[a-zA-Z0-9_]*[a-zA-Z] {
+
+    fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot start with an underscore\n", yylineno, column, yytext);
+
+    exit(1);
+}
+
+[a-zA-Z][a-zA-Z0-9_]*"_" {
+
+    fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot end with an underscore\n", yylineno, column, yytext);
+
+    exit(1);
+}
+("_"|[0-9])+[a-zA-Z][a-zA-Z0-9_]*"_" {
+
+    fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot start with underscore/number and end with an underscore\n", yylineno, column , yytext);
+
+    exit(1);
+}
+
+
 [0-9]+   {
     printf("NUMBER %s\n", yytext);
     column += yyleng;
@@ -59,9 +90,10 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 
 
 [ \t]+          { column += yyleng; }  /* Ignore whitespace just update column */
+
 \n              { column = 0;}  /*  reset column number */
 
-.       {
+. {
     fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
     exit(1);  /*    exit the program */
 }
