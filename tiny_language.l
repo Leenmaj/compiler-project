@@ -2,6 +2,7 @@
 
 int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 
+
 %}
 /* KEEP TRACK OF LINE NUMBER*/
 %option yylineno 
@@ -23,6 +24,7 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 "endloop"       { column += yyleng; printf("ENDLOOP\n"); }
 "read"          { column += yyleng; printf("READ\n"); }
 "write"         { column += yyleng; printf("WRITE\n"); }
+"var"           { column += yyleng; printf("VAR\n"); return VAR; } //for ambiguity
 "and"           { column += yyleng; printf("AND\n"); }     
 "or"            { column += yyleng; printf("OR\n"); }     
 "not"           { column += yyleng; printf("NOT\n"); }     
@@ -53,12 +55,6 @@ int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
 [a-zA-Z][a-zA-Z0-9_]*"_" {
 
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot end with an underscore\n", yylineno, column, yytext);
-
-    exit(1);
-}
-("_"|[0-9])+[a-zA-Z][a-zA-Z0-9_]*"_" {
-
-    fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot start with underscore/number and end with an underscore\n", yylineno, column , yytext);
 
     exit(1);
 }
@@ -123,3 +119,5 @@ int main(int argc, char *argv[]) {
 
     yylex();
 }
+
+
