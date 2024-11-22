@@ -71,6 +71,7 @@ condition:
     | NOT condition
     | condition AND condition
     | condition OR condition
+    | /* empty */  /* Allowing empty condition for certain cases like loops with no condition * not sure about it */
     ;
 
 
