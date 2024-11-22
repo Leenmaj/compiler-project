@@ -1,109 +1,228 @@
 %{
-
-int column = 0; /* KEEP TRACK OF COULMN NUMBER*/
-
-
+int column = 0; /* KEEP TRACK OF COLUMN NUMBER */
 %}
-/* KEEP TRACK OF LINE NUMBER*/
-%option yylineno 
+
+/* KEEP TRACK OF LINE NUMBER */
+%option yylineno
 
 %%
-"--"[^\n]* { column += yyleng; } // ignore comment
-"program"       { column += yyleng; printf("PROGRAM\n"); }
-"beginprogram"  { column += yyleng; printf("BEGIN_PROGRAM\n"); }
-"endprogram"    { column += yyleng; printf("END_PROGRAM\n"); }
-"integer"       { column += yyleng; printf("INTEGER\n"); }
-"array"         { column += yyleng; printf("ARRAY\n"); }
-"of"            { column += yyleng; printf("OF\n"); }
-"if"            { column += yyleng; printf("IF\n"); }
-"then"          { column += yyleng; printf("THEN\n"); }
-"endif"         { column += yyleng; printf("ENDIF\n"); }
-"else"          { column += yyleng; printf("ELSE\n"); }
-"while"         { column += yyleng; printf("WHILE\n"); }
-"loop"          { column += yyleng; printf("LOOP\n"); }
-"endloop"       { column += yyleng; printf("ENDLOOP\n"); }
-"read"          { column += yyleng; printf("READ\n"); }
-"write"         { column += yyleng; printf("WRITE\n"); }
-"var"           { column += yyleng; printf("VAR\n"); return VAR; } //for ambiguity
-"and"           { column += yyleng; printf("AND\n"); }     
-"or"            { column += yyleng; printf("OR\n"); }     
-"not"           { column += yyleng; printf("NOT\n"); }     
-"true"          { column += yyleng; printf("TRUE\n"); }   
-"false"         { column += yyleng; printf("FALSE\n"); }   
 
-
-
-[a-zA-Z]([a-zA-Z0-9_]{0,6}[a-zA-Z0-9])?   {     printf("IDENT %s\n", yytext);
+"--"[^\n]* {
     column += yyleng;
+} // ignore comment
+
+"program" {
+    column += yyleng;
+    return PROGRAM;  
 }
 
+"beginprogram" {
+    column += yyleng;
+    return BEGIN_PROGRAM;  /
+}
+
+"endprogram" {
+    column += yyleng;
+    return END_PROGRAM;  
+}
+
+"integer" {
+    column += yyleng;
+    return INTEGER;  
+}
+
+"array" {
+    column += yyleng;
+    return ARRAY;  
+}
+
+"of" {
+    column += yyleng;
+    return OF;  
+}
+
+"if" {
+    column += yyleng;
+    return IF; 
+}
+
+"then" {
+    column += yyleng;
+    return THEN; 
+}
+
+"endif" {
+    column += yyleng;
+    return ENDIF; 
+}
+
+"else" {
+    column += yyleng;
+    return ELSE; 
+}
+
+"while" {
+    column += yyleng;
+    return WHILE; 
+}
+
+"loop" {
+    column += yyleng;
+    return LOOP; 
+}
+
+"endloop" {
+    column += yyleng;
+    return ENDLOOP; 
+}
+
+"read" {
+    column += yyleng;
+    return READ;  
+}
+
+"write" {
+    column += yyleng;
+    return WRITE;  
+}
+
+"var" {
+    column += yyleng;
+    return VAR;  // Return VAR token (for ambiguity)
+}
+
+"and" {
+    column += yyleng;
+    return AND;  
+}
+
+"or" {
+    column += yyleng;
+    return OR;  
+}
+
+"not" {
+    column += yyleng;
+    return NOT;  
+}
+
+"true" {
+    column += yyleng;
+    return TRUE;  
+}
+
+"false" {
+    column += yyleng;
+    return FALSE;  
+}
+
+[a-zA-Z]([a-zA-Z0-9_]{0,6}[a-zA-Z0-9])? {
+    column += yyleng;
+    return IDENT; 
+}
 
 [0-9][a-zA-Z0-9_]*[a-zA-Z] {
-
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" must begin with a letter\n", yylineno, column, yytext);
-
     exit(1);
 }
 
 "_"[a-zA-Z0-9_]*[a-zA-Z] {
-
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot start with an underscore\n", yylineno, column, yytext);
-
     exit(1);
 }
 
 [a-zA-Z][a-zA-Z0-9_]*"_" {
-
     fprintf(stderr, "Error at line %d, column %d: identifier \"%s\" cannot end with an underscore\n", yylineno, column, yytext);
-
     exit(1);
 }
 
-
-[0-9]+   {
-    printf("NUMBER %s\n", yytext);
+[0-9]+ {
     column += yyleng;
+    return NUMBER; 
 }
 
-"-"             { printf("SUB\n"); }
-"+"             { printf("ADD\n"); }
-"*"             { printf("MULT\n"); }
-"/"             { printf("DIV\n"); }
+"-" {
+    return SUB; 
+}
 
-"="             { printf("EQ\n"); }
-"<>"            { printf("NEQ\n"); }
-"<"             { printf("LT\n"); }
-">"             { printf("GT\n"); }
-"<="            { printf("LTE\n"); }
-">="            { printf("GTE\n"); }
+"+" {
+    return ADD;  
+}
 
-";"             { printf("SEMICOLON\n"); }
-":"             { printf("COLON\n"); }
-","             { printf("COMMA\n"); }
-"("             { printf("L_PAREN\n"); }
-")"             { printf("R_PAREN\n"); }
-":="            { printf("ASSIGN\n"); }
+"*" {
+    return MULT;  
+}
 
+"/" {
+    return DIV; 
+}
 
-[ \t]+          { column += yyleng; }  /* Ignore whitespace just update column */
+"=" {
+    return EQ;  
+}
 
-\n              { column = 0;}  /*  reset column number */
+"<>" {
+    return NEQ;  
+}
+
+"<" {
+    return LT; 
+}
+
+">" {
+    return GT;  
+}
+
+"<=" {
+    return LTE;  
+}
+
+">=" {
+    return GTE;  
+}
+
+";" {
+    return SEMICOLON; 
+}
+
+":" {
+    return COLON; 
+}
+
+"," {
+    return COMMA; 
+}
+
+"(" {
+    return L_PAREN; 
+}
+
+")" {
+    return R_PAREN;  
+}
+
+":=" {
+    return ASSIGN;  
+}
+
+[ \t]+ {
+    column += yyleng; 
+}
+
+\n {
+    column = 0;  // Reset column number
+}
 
 . {
     fprintf(stderr, "Error:  at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
-    exit(1);  /*    exit the program */
+    exit(1);  // Exit the program on error
 }
-
 
 %%
 
-
-
-
 int yywrap() {
-    return 1;}
-
-
+    return 1;
+}
 
 int main(int argc, char *argv[]) {
     if(argc > 1) {
