@@ -18,7 +18,7 @@ int column = 0; /* KEEP TRACK OF COLUMN NUMBER */
 
 "beginprogram" {
     column += yyleng;
-    return BEGIN_PROGRAM;  /
+    return BEGIN_PROGRAM;  
 }
 
 "endprogram" {
