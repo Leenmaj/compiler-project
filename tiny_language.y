@@ -30,3 +30,59 @@ loop:
 
 
 //what is left is statements statements, expressions, and conditions 
+
+statements:
+  statement SEMICOLON statements
+    | statement
+    ;
+
+statement:
+    assignment
+    | conditional
+    | loop
+    | READ IDENT
+    | WRITE expression
+    ;
+
+expression:
+    expression ADD term
+    | expression SUB term
+    | term
+    ;
+
+term:
+    term MULT factor
+    | term DIV factor
+    | factor
+    ;
+
+factor:
+    NUMBER
+    | IDENT
+    | L_PAREN expression R_PAREN
+    ;
+
+
+condition:
+    TRUE
+    | FALSE
+    | expression relational_operator expression
+    | NOT condition
+    | condition AND condition
+    | condition OR condition
+    ;
+
+
+relational_operator:
+    EQ
+    | NEQ
+    | LT
+    | GT
+    | LTE
+    | GTE
+    ;
+
+
+assignment:
+    IDENT ASSIGN expression
+    ;
