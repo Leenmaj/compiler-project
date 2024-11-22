@@ -34,6 +34,7 @@ loop:
 statements:
   statement SEMICOLON statements
     | statement
+    | | /* empty */
     ;
 
 statement:
