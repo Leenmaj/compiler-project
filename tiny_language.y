@@ -1,11 +1,34 @@
-//main program structure
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Declare yylex() and yyerror()
+int yylex(void);
+void yyerror(const char *s);
+
+// Declare yyin for input stream
+extern FILE *yyin;
+%}
+
+// Precedence and associativity rules
+%left ADD SUB  // Left-associative addition and subtraction
+%left MULT DIV  // Left-associative multiplication and division
+%right ASSIGN  // Right-associative assignment
+
+// Token definitions (these should match those in tiny_language.l)
+%token PROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE LOOP ENDLOOP READ WRITE VAR AND OR NOT TRUE FALSE IDENT NUMBER ADD SUB MULT DIV EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
+
+%%
+
+// Grammar rules
+
 program:
-    PROGRAM IDENT SEMICOLON declarations statements ENDPROGRAM
+    PROGRAM IDENT SEMICOLON declarations statements END_PROGRAM
     ;
 
-//declarations (variables and arrays)
 declarations:
-    VAR declaration SEMICOLON declarations //VAR avoids ambiguity between declarations and assignments starting with IDENT
+    VAR declaration SEMICOLON declarations
     | /* empty */
     ;
 
@@ -18,7 +41,6 @@ type:
     | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
     ;
 
-//control structures (if, while)
 conditional:
     IF condition THEN statements ENDIF
     | IF condition THEN statements ELSE statements ENDIF
@@ -28,13 +50,10 @@ loop:
     WHILE condition LOOP statements ENDLOOP
     ;
 
-
-//what is left is statements statements, expressions, and conditions 
-
 statements:
-  statement SEMICOLON statements
+    statement SEMICOLON statements
     | statement
-    | | /* empty */
+    | /* empty */
     ;
 
 statement:
@@ -63,7 +82,6 @@ factor:
     | L_PAREN expression R_PAREN
     ;
 
-
 condition:
     TRUE
     | FALSE
@@ -71,9 +89,8 @@ condition:
     | NOT condition
     | condition AND condition
     | condition OR condition
-    | /* empty */  /* Allowing empty condition for certain cases like loops with no condition * not sure about it */
+    | /* empty */
     ;
-
 
 relational_operator:
     EQ
@@ -84,7 +101,31 @@ relational_operator:
     | GTE
     ;
 
-
 assignment:
     IDENT ASSIGN expression
     ;
+
+%%
+
+// Error handling function
+void yyerror(const char *s) {
+    fprintf(stderr, "Syntax error: %s\n", s);
+}
+
+// Main function to parse input file
+int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        FILE *file = fopen(argv[1], "r");
+        if (!file) {
+            perror("File not found");
+            return 1;
+        }
+        yyin = file;  // Set input stream
+    } else {
+        printf("Please provide an input file.\n");
+        return 1;
+    }
+
+    yyparse();  // Start parsing
+    return 0;
+}
