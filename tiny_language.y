@@ -13,10 +13,19 @@ extern int yylineno; // Line number from lexer
 extern char *yytext; // Current token text
 %}
 
-// Enable debugging support
 %debug
 
+%union {
+    int ival;   // For integer values
+    char *sval; // For strings like identifiers
+}
 
+%token <sval> IDENT
+%token <ival> NUMBER
+%type <ival> program declarations declaration type statement statements assignment conditional loop condition relational_operator expression term factor
+
+%token PROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE LOOP ENDLOOP READ WRITE VAR AND OR NOT TRUE FALSE 
+%token ADD SUB MULT DIV EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
 
 %left ADD SUB
 %left MULT DIV
@@ -25,19 +34,6 @@ extern char *yytext; // Current token text
 %left AND
 %right NOT
 %left EQ NEQ LT GT LTE GTE
-%union {
-    int ival;   // For integer values
-    char *sval; // For strings like identifiers
-}
-
-
-%token <sval> IDENT
-%type <ival> type
-%type <ival> declaration
-%token <ival> NUMBER
-
-%token PROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE LOOP ENDLOOP READ WRITE VAR AND OR NOT TRUE FALSE
-%token ADD SUB MULT DIV EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
 
 %%
 
@@ -50,7 +46,7 @@ program:
 
 declarations:
     declaration SEMICOLON declarations
-    | /* empty */
+    | /* empty */ { $$ = 0; }
     ;
 
 declaration:
@@ -59,7 +55,6 @@ declaration:
         printf("Declared variable '%s' of type '%s'.\n", $1, ($3 == 1 ? "INTEGER" : "ARRAY"));
     }
     ;
-
 
 type:
     INTEGER
@@ -75,28 +70,126 @@ type:
 
 statements:
     statement SEMICOLON statements
-    | statement
-    | /* empty */
+    | /* empty */ { $$ = 0; }
     ;
 
 statement:
     assignment
+    | conditional
+    | loop
     | READ IDENT
-    | WRITE NUMBER
-    ;
-
-assignment:
-    IDENT ASSIGN NUMBER
     {
-        printf("Assignment: %s := %d\n", $1, $3);
+        printf("Read operation for variable: %s\n", $2);
+    }
+    | WRITE expression
+    {
+        printf("Write operation for value: %d\n", $2);
     }
     ;
 
+assignment:
+    IDENT ASSIGN expression
+    {
+        printf("Assignment: %s := %d\n", $1, $3);
+    }
+    | IDENT L_PAREN expression R_PAREN ASSIGN expression
+    {
+        printf("Array assignment: %s[%d] := %d\n", $1, $3, $6);
+    }
+    ;
+
+conditional:
+    IF condition THEN statements ENDIF
+    {
+        printf("Conditional statement evaluated (without ELSE).\n");
+    }
+    | IF condition THEN statements ELSE statements ENDIF
+    {
+        printf("Conditional statement evaluated (with ELSE).\n");
+    }
+    ;
+
+loop:
+    WHILE condition LOOP statements ENDLOOP
+    {
+        printf("While loop evaluated.\n");
+    }
+    ;
+condition:
+    condition OR condition
+    {
+        $$ = $1 || $3;
+        printf("Logical OR: %d OR %d = %d\n", $1, $3, $$);
+    }
+    | condition AND condition
+    {
+        $$ = $1 && $3;
+        printf("Logical AND: %d AND %d = %d\n", $1, $3, $$);
+    }
+    | NOT condition
+    {
+        $$ = !$2;
+        printf("NOT %d = %d\n", $2, $$);
+    }
+    | expression relational_operator expression
+    {
+        switch ($2) {
+            case EQ: $$ = $1 == $3; break;
+            case NEQ: $$ = $1 != $3; break;
+            case LT: $$ = $1 < $3; break;
+            case GT: $$ = $1 > $3; break;
+            case LTE: $$ = $1 <= $3; break;
+            case GTE: $$ = $1 >= $3; break;
+            default: yyerror("Invalid relational operator");
+        }
+        printf("Relational expression evaluated: %d\n", $$);
+    }
+    | TRUE { $$ = 1; }
+    | FALSE { $$ = 0; }
+    ;
+
+relational_operator:
+    EQ  { $$ = EQ; }
+    | NEQ { $$ = NEQ; }
+    | LT  { $$ = LT; }
+    | GT  { $$ = GT; }
+    | LTE { $$ = LTE; }
+    | GTE { $$ = GTE; }
+    ;
 
 
-    
+
+expression:
+    expression ADD term { $$ = $1 + $3; }
+    | expression SUB term { $$ = $1 - $3; }
+    | term { $$ = $1; }
+    ;
+
+factor:
+    NUMBER { $$ = $1; }
+    | IDENT { printf("Referenced variable: %s\n", $1); $$ = 0; /* Placeholder */ }
+    | IDENT L_PAREN expression R_PAREN
+      { 
+          printf("Array access: %s[%d]\n", $1, $3); 
+          $$ = 0; /* Placeholder */
+      }
+    | L_PAREN expression R_PAREN { $$ = $2; }
+    ;
+
+term:
+    term MULT factor { $$ = $1 * $3; }
+    | term DIV factor
+    {
+        $$ = $1 / $3;
+    }
+    | factor { $$ = $1; }
+    ;
 
 %%
+
+int ywrap() {
+    return 1;  // Return 1 to indicate end of input
+}
 
 // Error handling function
 void yyerror(const char *s) {
