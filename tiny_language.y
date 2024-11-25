@@ -97,6 +97,12 @@ assignment:
         printf("Array assignment: %s[%d] := %d\n", $1, $3, $6);
     }
     ;
+    loop:
+    WHILE condition LOOP statements ENDLOOP
+    {
+        printf("While loop evaluated.\n");
+    }
+    ;
 
 conditional:
     IF condition THEN statements ENDIF
@@ -109,12 +115,8 @@ conditional:
     }
     ;
 
-loop:
-    WHILE condition LOOP statements ENDLOOP
-    {
-        printf("While loop evaluated.\n");
-    }
-    ;
+
+
 condition:
     condition OR condition
     {
@@ -126,23 +128,18 @@ condition:
         $$ = $1 && $3;
         printf("Logical AND: %d AND %d = %d\n", $1, $3, $$);
     }
-    | NOT condition
-    {
-        $$ = !$2;
-        printf("NOT %d = %d\n", $2, $$);
-    }
     | expression relational_operator expression
     {
         switch ($2) {
+            case LT: $$ = $1 < $3; break;
+            case LTE: $$ = $1 <= $3; break;
+            case GT: $$ = $1 > $3; break;
+            case GTE: $$ = $1 >= $3; break;
             case EQ: $$ = $1 == $3; break;
             case NEQ: $$ = $1 != $3; break;
-            case LT: $$ = $1 < $3; break;
-            case GT: $$ = $1 > $3; break;
-            case LTE: $$ = $1 <= $3; break;
-            case GTE: $$ = $1 >= $3; break;
             default: yyerror("Invalid relational operator");
         }
-        printf("Relational expression evaluated: %d\n", $$);
+        printf("Relational expression: %d %d %d = %d\n", $1, $2, $3, $$);
     }
     | TRUE { $$ = 1; }
     | FALSE { $$ = 0; }
@@ -199,7 +196,7 @@ void yyerror(const char *s) {
 // Main function to parse input file
 int main(int argc, char *argv[]) {
     extern int yydebug;
-    yydebug = 1;  // Enable parser debugging
+    yydebug = 0;  // Enable parser debugging
 
     if (argc > 1) {
         FILE *file = fopen(argv[1], "r");
