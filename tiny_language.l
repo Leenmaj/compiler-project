@@ -33,6 +33,7 @@ int column = 0;     // Keep track of column number
 "or" { return OR; }
 "not" { return NOT; }
 "true" { return TRUE; }
+"false" { return FALSE; }
 [a-zA-Z][a-zA-Z0-9_]* {
     yylval.sval = strdup(yytext); // Allocate memory for string value
     return IDENT;                // Return IDENT token

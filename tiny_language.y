@@ -143,6 +143,7 @@ condition:
     }
     | TRUE { $$ = 1; }
     | FALSE { $$ = 0; }
+    
     ;
 
 relational_operator:
