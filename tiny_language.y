@@ -9,45 +9,68 @@ void yyerror(const char *s);
 
 // Declare yyin for input stream
 extern FILE *yyin;
+extern int yylineno; // Line number from lexer
+extern char *yytext; // Current token text
 %}
 
-// Precedence and associativity rules
-%left ADD SUB  // Left-associative addition and subtraction
-%left MULT DIV  // Left-associative multiplication and division
-%right ASSIGN  // Right-associative assignment
+// Enable debugging support
+%debug
 
-// Token definitions (these should match those in tiny_language.l)
-%token PROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE LOOP ENDLOOP READ WRITE VAR AND OR NOT TRUE FALSE IDENT NUMBER ADD SUB MULT DIV EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
+
+
+%left ADD SUB
+%left MULT DIV
+%right ASSIGN
+%left OR
+%left AND
+%right NOT
+%left EQ NEQ LT GT LTE GTE
+%union {
+    int ival;   // For integer values
+    char *sval; // For strings like identifiers
+}
+
+
+%token <sval> IDENT
+%type <ival> type
+%type <ival> declaration
+%token <ival> NUMBER
+
+%token PROGRAM BEGIN_PROGRAM END_PROGRAM INTEGER ARRAY OF IF THEN ENDIF ELSE WHILE LOOP ENDLOOP READ WRITE VAR AND OR NOT TRUE FALSE
+%token ADD SUB MULT DIV EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN ASSIGN
 
 %%
 
-// Grammar rules
-
 program:
-    PROGRAM IDENT SEMICOLON declarations statements END_PROGRAM
+    PROGRAM IDENT SEMICOLON declarations BEGIN_PROGRAM statements END_PROGRAM
+    {
+        printf("Program parsed successfully.\n");
+    }
     ;
 
 declarations:
-    VAR declaration SEMICOLON declarations
+    declaration SEMICOLON declarations
     | /* empty */
     ;
 
 declaration:
     IDENT COLON type
+    {
+        printf("Declared variable '%s' of type '%s'.\n", $1, ($3 == 1 ? "INTEGER" : "ARRAY"));
+    }
     ;
+
 
 type:
     INTEGER
+    {
+        $$ = 1; // 1 represents INTEGER type
+    }
     | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
-    ;
-
-conditional:
-    IF condition THEN statements ENDIF
-    | IF condition THEN statements ELSE statements ENDIF
-    ;
-
-loop:
-    WHILE condition LOOP statements ENDLOOP
+    {
+        printf("Array of size %d declared.\n", $3);
+        $$ = 2; // 2 represents ARRAY type
+    }
     ;
 
 statements:
@@ -58,62 +81,33 @@ statements:
 
 statement:
     assignment
-    | conditional
-    | loop
     | READ IDENT
-    | WRITE expression
-    ;
-
-expression:
-    expression ADD term
-    | expression SUB term
-    | term
-    ;
-
-term:
-    term MULT factor
-    | term DIV factor
-    | factor
-    ;
-
-factor:
-    NUMBER
-    | IDENT
-    | L_PAREN expression R_PAREN
-    ;
-
-condition:
-    TRUE
-    | FALSE
-    | expression relational_operator expression
-    | NOT condition
-    | condition AND condition
-    | condition OR condition
-    | /* empty */
-    ;
-
-relational_operator:
-    EQ
-    | NEQ
-    | LT
-    | GT
-    | LTE
-    | GTE
+    | WRITE NUMBER
     ;
 
 assignment:
-    IDENT ASSIGN expression
+    IDENT ASSIGN NUMBER
+    {
+        printf("Assignment: %s := %d\n", $1, $3);
+    }
     ;
+
+
+
+    
 
 %%
 
 // Error handling function
 void yyerror(const char *s) {
-    fprintf(stderr, "Syntax error: %s\n", s);
+    fprintf(stderr, "Syntax error: %s at line %d, near '%s'\n", s, yylineno, yytext);
 }
 
 // Main function to parse input file
 int main(int argc, char *argv[]) {
+    extern int yydebug;
+    yydebug = 1;  // Enable parser debugging
+
     if (argc > 1) {
         FILE *file = fopen(argv[1], "r");
         if (!file) {
