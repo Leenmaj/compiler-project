@@ -1,6 +1,8 @@
 %{
 #include "y.tab.h"  // Include Bison-generated header for token definitions
-int column = 0;  // Keep track of column number
+#include <stdlib.h>
+#include <string.h>
+int column = 0;     // Keep track of column number
 %}
 
 %option yylineno
@@ -32,9 +34,15 @@ int column = 0;  // Keep track of column number
 "not" { return NOT; }
 "true" { return TRUE; }
 "false" { return FALSE; }
+[a-zA-Z][a-zA-Z0-9_]* {
+    yylval.sval = strdup(yytext); // Allocate memory for string value
+    return IDENT;                // Return IDENT token
+}
 
-[a-zA-Z][a-zA-Z0-9_]* { return IDENT; }  // Identifiers
-[0-9]+ { return NUMBER; }  // Numbers
+[0-9]+ {
+    yylval.ival = atoi(yytext);  // Convert string to integer
+    return NUMBER;               // Return NUMBER token
+}
 
 "-" { return SUB; }
 "+" { return ADD; }
@@ -55,7 +63,7 @@ int column = 0;  // Keep track of column number
 ":=" { return ASSIGN; }
 
 [ \t]+ { column += yyleng; }  // Ignore whitespace
-\n { column = 0; }  // Reset column number on new line
+\n { column = 0; }           // Reset column number on new line
 
 . {
     fprintf(stderr, "Error: at line %d, column %d unrecognized symbol %s\n", yylineno, column, yytext);
@@ -66,19 +74,4 @@ int column = 0;  // Keep track of column number
 
 int yywrap() {
     return 1;  // End of input handling
-}
-
-int main(int argc, char *argv[]) {
-    if (argc > 1) {
-        yyin = fopen(argv[1], "r");  // Open input file
-        if (!yyin) {
-            perror("Failed to open file");
-            return 1;
-        }
-    } else {
-        printf("Please provide an input file.\n");
-        return 1;
-    }
-
-    yylex();  // Start lexical analysis
 }
