@@ -37,21 +37,23 @@ prog:
             printf("Program parsed successfully.\n"); 
         }
     ;
+declaration:
+    identifiers COLON type
+        { printf("declaration -> identifiers: type\n"); }
+    ;
+
+    type:
+    INTEGER
+        { printf("type -> INTEGER\n"); }
+    | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
+        { printf("type -> ARRAY L_PAREN NUMBER R_PAREN OF INTEGER\n"); }
+    ;
 
 declarations:
-    /* epsilon */
-    { printf("declarations -> epsilon\n"); }
-    | declaration SEMICOLON declarations
-    { printf("declarations -> declaration SEMICOLON declarations\n"); }
+    declaration SEMICOLON declarations
+    | declaration SEMICOLON
+        { printf("declarations -> declaration SEMICOLON\n"); }
     ;
-
-declaration:
-    identifiers COLON INTEGER
-        { printf("declaration -> identifiers: INTEGER\n"); }
-    | identifiers COLON ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
-        { printf("declaration -> identifiers: ARRAY OF INTEGER\n"); }
-    ;
-
 
 identifiers:
     IDENT
@@ -161,6 +163,7 @@ vars:
         { printf("vars -> var COMMA vars\n"); }
     ;
 
+
 %%
 
 int main(int argc, char **argv) {
@@ -176,7 +179,6 @@ int main(int argc, char **argv) {
 }
 
 void yyerror(const char *msg) {
-       /* implement your error handling */
-
+//error msg
 
 }
