@@ -47,6 +47,11 @@ program:
 declarations:
     declaration SEMICOLON declarations
     | /* empty */ { $$ = 0; }
+    | error
+    {
+        yyerror("Invalid declaration or missing semicolon.");
+        yyerrok; // Recover and continue parsing
+    }
     ;
 
 declaration:
@@ -54,22 +59,42 @@ declaration:
     {
         printf("Declared variable '%s' of type '%s'.\n", $1, ($3 == 1 ? "INTEGER" : "ARRAY"));
     }
+    | error
+    {
+        yyerror("Invalid declaration syntax.");
+        yyerrok;
+    }
     ;
 
 type:
     INTEGER
     {
-        $$ = 1; // 1 represents INTEGER type
+        $$ = 1; // Represents INTEGER type
     }
     | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
     {
-        printf("Array of size %d declared.\n", $3);
-        $$ = 2; // 2 represents ARRAY type
+        if ($3 <= 0) {
+            yyerror("Array size must be positive.");
+            $$ = 2; // Assign a default value to continue parsing
+        } else {
+            printf("Array of size %d declared.\n", $3);
+            $$ = 2; // Represents ARRAY type
+        }
     }
-    ;
+    | error { yyerror("Expected type (INTEGER or ARRAY)."); yyerrok;}
+  ;
+
 
 statements:
     statement SEMICOLON statements
+    {
+        printf("Parsed a statement followed by a semicolon.\n");
+    }
+    | statement
+    {
+        yyerror("Missing semicolon after statement.");
+        yyerrok; // Recover and continue parsing
+    }
     | /* empty */ { $$ = 0; }
     ;
 
@@ -85,6 +110,7 @@ statement:
     {
         printf("Write operation for value: %d\n", $2);
     }
+    | error{ yyerror("Invalid statement."); yyerrok; }
     ;
 
 assignment:
@@ -96,13 +122,65 @@ assignment:
     {
         printf("Array assignment: %s[%d] := %d\n", $1, $3, $6);
     }
+    | IDENT EQ expression
+    {
+        yyerror(":= expected");
+        yyerrok; 
+    }
+    | IDENT L_PAREN expression R_PAREN EQ expression
+    {
+        yyerror(":= expected");
+        yyerrok; 
+    }
+    | IDENT ASSIGN error
+    {
+        yyerror("Invalid expression in assignment.");
+        yyerrok; 
+    }
+    | IDENT L_PAREN expression R_PAREN ASSIGN error
+    {
+        yyerror("Invalid expression in array assignment.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid assignment syntax.");
+        yyerrok; 
+    }
     ;
+
     loop:
     WHILE condition LOOP statements ENDLOOP
     {
         printf("While loop evaluated.\n");
     }
+    | WHILE error LOOP statements ENDLOOP
+    {
+        yyerror("Invalid or missing condition in while loop.");
+        yyerrok;
+    }
+    | WHILE condition error
+    {
+        yyerror("Missing 'LOOP' keyword in while loop.");
+        yyerrok; 
+    }
+    | WHILE condition LOOP error ENDLOOP
+    {
+        yyerror("Error in loop body (statements).");
+        yyerrok; 
+    }
+    | WHILE condition LOOP statements error
+    {
+        yyerror("Missing 'ENDLOOP' keyword in while loop.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid while loop syntax.");
+        yyerrok; 
+    }
     ;
+
 
 conditional:
     IF condition THEN statements ENDIF
@@ -113,9 +191,37 @@ conditional:
     {
         printf("Conditional statement evaluated (with ELSE).\n");
     }
+    | IF error THEN statements ENDIF
+    {
+        yyerror("Invalid or missing condition in IF statement.");
+        yyerrok;
+    }
+    | IF condition error
+    {
+        yyerror("Missing 'THEN' keyword in IF statement.");
+        yyerrok; 
+    }
+    | IF condition THEN error ENDIF
+    {
+        yyerror("Error in statements within IF block.");
+        yyerrok; 
+    }
+    | IF condition THEN statements ELSE error ENDIF
+    {
+        yyerror("Error in statements within ELSE block.");
+        yyerrok;
+    }
+    | IF condition THEN statements error
+    {
+        yyerror("Missing 'ENDIF' keyword in IF statement.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid IF statement syntax.");
+        yyerrok; 
+    }
     ;
-
-
 
 condition:
     condition OR condition
@@ -137,14 +243,39 @@ condition:
             case GTE: $$ = $1 >= $3; break;
             case EQ: $$ = $1 == $3; break;
             case NEQ: $$ = $1 != $3; break;
-            default: yyerror("Invalid relational operator");
+            default: 
+                yyerror("Invalid relational operator.");
         }
         printf("Relational expression: %d %d %d = %d\n", $1, $2, $3, $$);
     }
-    | TRUE { $$ = 1; }
-    | FALSE { $$ = 0; }
-    
+    | TRUE {    $$ = 1; }
+    | FALSE {    $$ = 0; }
+    | condition OR error
+    {
+        yyerror("Invalid condition after 'OR'.");
+        yyerrok; 
+        $$ = 0; // Assign a default value
+    }
+    | condition AND error
+    {
+        yyerror("Invalid condition after 'AND'.");
+        yyerrok;
+        $$ = 0; // Assign a default value
+    }
+    | expression error expression
+    {
+        yyerror("Missing or invalid relational operator.");
+        yyerrok;
+        $$ = 0; // Assign a default value
+    }
+    | error
+    {
+        yyerror("Invalid condition syntax.");
+        yyerrok;
+        $$ = 0; // Assign a default value
+    }
     ;
+
 
 relational_operator:
     EQ  { $$ = EQ; }
@@ -153,40 +284,114 @@ relational_operator:
     | GT  { $$ = GT; }
     | LTE { $$ = LTE; }
     | GTE { $$ = GTE; }
+    | error
+    {
+        yyerror("Invalid or missing relational operator.");
+        yyerrok; 
+        $$ = 0; // Assign a default operator to avoid uninitialized variables
+    }
     ;
-
-
 
 expression:
     expression ADD term { $$ = $1 + $3; }
     | expression SUB term { $$ = $1 - $3; }
     | term { $$ = $1; }
+    | expression ADD error
+    {
+        yyerror("Invalid or missing operand after '+'.");
+        yyerrok;
+        $$ = $1; // Use the left-hand side value to continue
+    }
+    | expression SUB error
+    {
+        yyerror("Invalid or missing operand after '-'.");
+        yyerrok; 
+        $$ = $1; // Use the left-hand side value to continue
+    }
+    | error
+    {
+        yyerror("Invalid expression syntax.");
+        yyerrok;
+        $$ = 0; // Assign a default value to avoid uninitialized variables
+    }
     ;
 
 factor:
     NUMBER { $$ = $1; }
-    | IDENT { printf("Referenced variable: %s\n", $1); $$ = 0; /* Placeholder */ }
+    | IDENT
+    {
+        if (!lookup_variable($1)) {
+            yyerror("Undefined variable.");
+            $$ = 0; // Assign a default value to recover
+        } else {
+            printf("Referenced variable: %s\n", $1);
+            $$ = 0; // Replace with the variable's value once symbol table integration is complete
+        }
+    }
     | IDENT L_PAREN expression R_PAREN
-      { 
-          printf("Array access: %s[%d]\n", $1, $3); 
-          $$ = 0; /* Placeholder */
-      }
+    {
+        if (!lookup_array($1)) {
+            yyerror("Undefined array.");
+            $$ = 0; // Assign a default value to recover
+        } else {
+            printf("Array access: %s[%d]\n", $1, $3);
+            $$ = 0; // Replace with array value access logic
+        }
+    }
+    | IDENT L_PAREN error R_PAREN
+    {
+        yyerror("Invalid array index.");
+        yyerrok; 
+        $$ = 0; // Assign a default value
+    }
     | L_PAREN expression R_PAREN { $$ = $2; }
+    | L_PAREN error
+    {
+        yyerror("Unmatched opening parenthesis.");
+        yyerrok; 
+        $$ = 0; // Assign a default value
+    }
+    | error
+    {
+        yyerror("Invalid factor syntax.");
+        yyerrok; 
+        $$ = 0; // Assign a default value
+    }
     ;
 
+
 term:
-    term MULT factor { $$ = $1 * $3; }
+    term MULT factor
+    {
+        $$ = $1 * $3;
+        printf("Multiplication: %d * %d = %d\n", $1, $3, $$);
+    }
     | term DIV factor
     {
-        $$ = $1 / $3;
+        if ($3 == 0) {
+            yyerror("Division by zero.");
+            $$ = 0; // Assign a default value to recover
+        } else {
+            $$ = $1 / $3;
+            printf("Division: %d / %d = %d\n", $1, $3, $$);
+        }
     }
-    | factor { $$ = $1; }
+    | factor
+    {
+        $$ = $1;
+    }
+    | error
+    {
+        yyerror("Invalid term syntax.");
+        yyerrok; 
+        $$ = 0; // Assign a default value
+    }
     ;
 
 %%
 
-int ywrap() {
-    return 1;  // Return 1 to indicate end of input
+int yywrap() {
+    return 1;  // Continue until EOF
 }
 
 // Error handling function
