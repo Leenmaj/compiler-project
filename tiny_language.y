@@ -37,22 +37,64 @@ prog:
             printf("Program parsed successfully.\n"); 
         }
     ;
+
 declaration:
     identifiers COLON type
         { printf("declaration -> identifiers: type\n"); }
+    identifiers COLON error
+    {
+        yyerror("Invalid type in declaration.");
+        yyerrok;
+    }
+    |error
+    {
+        yyerror("Invalid declaration syntax.");
+        yyerrok;
+    }
     ;
 
-    type:
+type:
     INTEGER
         { printf("type -> INTEGER\n"); }
     | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
-        { printf("type -> ARRAY L_PAREN NUMBER R_PAREN OF INTEGER\n"); }
+    {
+        if ($3 <= 0) {
+            yyerror("Array size must be positive.");
+        } else {
+            printf("type -> ARRAY L_PAREN NUMBER R_PAREN OF INTEGER\n");
+        }
+    }
+    | ARRAY L_PAREN error R_PAREN OF INTEGER
+    {
+        yyerror("Invalid array size.");
+        yyerrok;
+    }
+    | ARRAY error
+    {
+        yyerror("Invalid array declaration.");
+        yyerrok;
+    }
+    | error
+    {
+        yyerror("Invalid type syntax.");
+        yyerrok;
+    }
     ;
 
 declarations:
     declaration SEMICOLON declarations
     | declaration SEMICOLON
         { printf("declarations -> declaration SEMICOLON\n"); }
+    | declaration error
+    {
+        yyerror("Missing semicolon after declaration.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid declaration syntax.");
+        yyerrok;
+    }
     ;
 
 identifiers:
@@ -60,6 +102,16 @@ identifiers:
         { printf("identifiers -> IDENT\n"); }
     | IDENT COMMA identifiers
         { printf("identifiers -> IDENT COMMA IDENTIFIERS\n"); }
+    | IDENT COMMA error
+    {
+        yyerror("Invalid identifier after ','");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid identifier list syntax");
+        yyerrok; 
+    }
     ;
 
 statements:
@@ -67,6 +119,16 @@ statements:
       { printf("statements -> epsilon\n"); }
     | statement SEMICOLON statements
         { printf("Parsed statement.\n"); }
+    | statement error
+    {
+        yyerror("Missing semicolon after statement.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid syntax in statements.");
+        yyerrok;
+    }
     ;
 
 statement:
@@ -82,6 +144,41 @@ statement:
         { printf("statement -> READ vars\n"); }
     | WRITE vars
         { printf("statement -> WRITE vars\n"); }
+    | IF condition THEN statements error
+    {
+        yyerror("Missing 'ENDIF' in IF statement.");
+        yyerrok; 
+    }
+    | IF condition THEN error ENDIF
+    {
+        yyerror("Invalid statements block in IF statement.");
+        yyerrok; 
+    }
+    | WHILE condition LOOP error ENDLOOP
+    {
+        yyerror("Invalid statements block in WHILE loop.");
+        yyerrok;
+    }
+    | WHILE condition error
+    {
+        yyerror("Missing 'LOOP' keyword in WHILE loop.");
+        yyerrok; 
+    }
+    | READ error
+    {
+        yyerror("Invalid variables in READ statement.");
+        yyerrok; 
+    }
+    | WRITE error
+    {
+        yyerror("Invalid variables in WRITE statement.");
+        yyerrok;
+    }
+    | error
+    {
+        yyerror("Invalid syntax in statement.");
+        yyerrok; 
+    }
     ;
 
 condition:
@@ -97,6 +194,31 @@ condition:
         { printf("condition -> TRUE\n"); }
     | FALSE
         { printf("condition -> FALSE\n"); }
+    | condition OR error
+    {
+        yyerror("Invalid condition after 'OR'.");
+        yyerrok; 
+    }
+    | condition AND error
+    {
+        yyerror("Invalid condition after 'AND'.");
+        yyerrok;
+    }
+    | NOT error
+    {
+        yyerror("Invalid condition after 'NOT'.");
+        yyerrok; 
+    }
+    | expression error expression
+    {
+        yyerror("Invalid or missing comparison operator in condition.");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid syntax in condition.");
+        yyerrok;
+    }
     ;
 
 comp_op:
@@ -112,6 +234,11 @@ comp_op:
         { printf("comp_op -> GT\n"); }
     | GTE
         { printf("comp_op -> GTE\n"); }
+    | error
+    {
+        yyerror("Invalid comparison operator.");
+        yyerrok;
+    }
     ;
 
 expression:
@@ -121,6 +248,21 @@ expression:
         { printf("expression -> term ADD expression\n"); }
     | term SUB expression
         { printf("expression -> term SUB expression\n"); }
+    | term ADD error
+    {
+        yyerror("Invalid or missing operand after '+'");
+        yyerrok;
+    }
+    | term SUB error
+    {
+        yyerror("Invalid or missing operand after '-'");
+        yyerrok;
+    }
+    | error
+    {
+        yyerror("Invalid expression syntax");
+        yyerrok; 
+    }
     ;
 
 term:
@@ -130,6 +272,21 @@ term:
         { printf("term -> factor MULT term\n"); }
     | factor DIV term
         { printf("term -> factor DIV term\n"); }
+    | factor MULT error
+    {
+        yyerror("Invalid or missing operand after '*'");
+        yyerrok; 
+    }
+    | factor DIV error
+    {
+        yyerror("Invalid or missing operand after '/'");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid term syntax");
+        yyerrok;
+    }
     ;
 
 factor:
@@ -139,8 +296,23 @@ factor:
         { printf("factor -> IDENT\n"); }
     | L_PAREN expression R_PAREN
         { printf("factor -> (expression)\n"); }
+    | L_PAREN error R_PAREN
+    {
+        yyerror("Invalid expression inside parentheses");
+        yyerrok;
+    }
+    | L_PAREN expression error
+    {
+        yyerror("Missing closing parenthesis");
+        yyerrok; 
+    }
     | array_subscript
         { printf("factor -> array_subscript\n"); }
+    | error
+    {
+        yyerror("Invalid factor syntax");
+        yyerrok; 
+    }
     ;
 
 var:
@@ -148,19 +320,48 @@ var:
         { printf("var -> IDENT\n"); }
     | array_subscript
         { printf("var -> array_subscript\n"); }
+    | error
+    {
+        yyerror("Invalid variable syntax");
+        yyerrok;
+    }
     ;
 
 array_subscript:
     IDENT L_PAREN expression R_PAREN
         { printf("array_subscript -> IDENT L_PAREN expression R_PAREN\n"); }
+    | IDENT L_PAREN error R_PAREN
+    {
+        yyerror("Invalid expression in array subscript");
+        yyerrok; 
+    }
+    | IDENT L_PAREN expression error
+    {
+        yyerror("Missing closing parenthesis in array subscript");
+        yyerrok; 
+    }
+    | error
+    {
+        yyerror("Invalid array subscript syntax");
+        yyerrok;
+    }
     ;
-
 
 vars:
     var
         { printf("vars -> var\n"); }
     | var COMMA vars
         { printf("vars -> var COMMA vars\n"); }
+    | var COMMA error
+    {
+        yyerror("Invalid variable after ','");
+        yyerrok;
+    }
+    | error
+    {
+        yyerror("Invalid variable list syntax");
+        yyerrok;
+    }
     ;
 
 
@@ -178,7 +379,59 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void yyerror(const char *msg) {
-//error msg
+int yylex() {
+    int c;
 
+    while ((c = getchar()) != EOF) {
+        // Increment position for non-newline characters
+        currPos++;
+
+        // Handle newlines
+        if (c == '\n') {
+            currLine++;
+            currPos = 1; // Reset position at the start of a new line
+        }
+
+        // Skip whitespaces
+        if (isspace(c)) {
+            continue;
+        }
+
+        // Handle identifiers (multi-character)
+        if (isalpha(c)) {
+            char buffer[256]; // Adjust size as needed
+            int i = 0;
+            do {
+                buffer[i++] = c;
+                c = getchar();
+            } while (isalnum(c) && i < sizeof(buffer) - 1);
+            buffer[i] = '\0';
+            ungetc(c, stdin); // Push back the last character
+            yylval.sval = strdup(buffer); // Allocate memory
+            return IDENT;
+        }
+
+        // Handle numbers (multi-digit)
+        if (isdigit(c)) {
+            int value = 0;
+            do {
+                value = value * 10 + (c - '0');
+                c = getchar();
+            } while (isdigit(c));
+            ungetc(c, stdin); // Push back the last character
+            yylval.ival = value;
+            return NUMBER;
+        }
+
+        // Handle unrecognized characters
+        fprintf(stderr, "Unrecognized character '%c' at line %d, position %d\n", c, currLine, currPos);
+        return 0; // Or a specific token for invalid input
+    }
+
+    return 0; // EOF
+}
+
+// Error handling function
+void yyerror(const char *msg) {
+    fprintf(stderr, "Syntax error: %s at line %d, position %d\n", msg, currLine, currPos);
 }
