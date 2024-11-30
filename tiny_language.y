@@ -85,6 +85,12 @@ declarations:
         yyerror("Missing semicolon after declaration.");
         yyerrok; 
     }
+  | identifiers error 
+        {
+            yyerror("invalid declaration");
+            yyerrok;  // Recover from the error
+        }
+
   
     ;
 
