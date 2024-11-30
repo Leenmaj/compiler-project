@@ -145,66 +145,82 @@ int column = 0; /* KEEP TRACK OF COLUMN NUMBER */
 
 "-" {
     return SUB; 
+    column += yyleng; 
 }
 
 "+" {
     return ADD;  
+    column += yyleng; 
 }
 
 "*" {
     return MULT;  
+    column += yyleng; 
 }
 
 "/" {
     return DIV; 
+    column += yyleng; 
 }
 
 "=" {
     return EQ;  
+    column += yyleng; 
 }
 
 "<>" {
     return NEQ;  
+    column += yyleng; 
 }
 
 "<" {
     return LT; 
+    column += yyleng; 
 }
 
 ">" {
     return GT;  
+    column += yyleng; 
 }
 
 "<=" {
     return LTE;  
+    column += yyleng; 
 }
 
 ">=" {
     return GTE;  
+    column += yyleng; 
 }
 
 ";" {
     return SEMICOLON; 
+    column += yyleng; 
 }
 
 ":" {
     return COLON; 
+    column += yyleng; 
 }
 
 "," {
     return COMMA; 
+    column += yyleng; 
 }
 
 "(" {
     return L_PAREN; 
+    column += yyleng; 
 }
 
 ")" {
     return R_PAREN;  
+    column += yyleng; 
 }
 
 ":=" {
     return ASSIGN;  
+    column += yyleng; 
 }
 
 [ \t]+ {
