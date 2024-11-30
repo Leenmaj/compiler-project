@@ -54,13 +54,7 @@ type:
     INTEGER
         { printf("type -> INTEGER\n"); }
     | ARRAY L_PAREN NUMBER R_PAREN OF INTEGER
-    {
-        if ($3 <= 0) {
-            yyerror("Array size must be positive.");
-        } else {
-            printf("type -> ARRAY L_PAREN NUMBER R_PAREN OF INTEGER\n");
-        }
-    }
+    { printf("type -> ARRAY L_PAREN NUMBER R_PAREN OF INTEGER\n"); }
     | ARRAY L_PAREN error R_PAREN OF INTEGER
     {
         yyerror("Invalid array size.");
