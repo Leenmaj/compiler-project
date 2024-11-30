@@ -118,6 +118,11 @@ statements:
 statement:
     var ASSIGN expression
         { printf("statement -> var ASSIGN expression\n"); }
+   | var error expression
+    {
+        yyerror("Syntax error: ':=' expected");
+        yyerrok;  
+    }
     | IF condition THEN statements ENDIF
         { printf("statement -> IF condition THEN statements ENDIF\n"); }
     | IF condition THEN statements ELSE statements ENDIF
