@@ -6,9 +6,9 @@ void yyerror(const char *msg);
 int yylex();  // Declare yylex
 
 extern FILE *yyin;  // Declare yyin as an external variable
+extern int yylineno; 
+extern int column;
 
-
-int currLine = 1;  // Define currLine
 int currPos = 1;   // Define currPos
 %}
 
@@ -41,16 +41,13 @@ prog:
 declaration:
     identifiers COLON type
         { printf("declaration -> identifiers: type\n"); }
-    identifiers COLON error
+
+
+    | IDENT COMMA error
     {
-        yyerror("Invalid type in declaration.");
-        yyerrok;
+        yyerror("Invalid identifier after ','");
     }
-    |error
-    {
-        yyerror("Invalid declaration syntax.");
-        yyerrok;
-    }
+
     ;
 
 type:
@@ -74,27 +71,21 @@ type:
         yyerror("Invalid array declaration.");
         yyerrok;
     }
-    | error
-    {
-        yyerror("Invalid type syntax.");
-        yyerrok;
-    }
+
     ;
 
 declarations:
+    /* epsilon */
+    { printf("declarations -> epsilon\n"); }
+    |
     declaration SEMICOLON declarations
-    | declaration SEMICOLON
-        { printf("declarations -> declaration SEMICOLON\n"); }
+
     | declaration error
     {
         yyerror("Missing semicolon after declaration.");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid declaration syntax.");
-        yyerrok;
-    }
+  
     ;
 
 identifiers:
@@ -107,11 +98,8 @@ identifiers:
         yyerror("Invalid identifier after ','");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid identifier list syntax");
-        yyerrok; 
-    }
+    identifiers 
+
     ;
 
 statements:
@@ -124,11 +112,7 @@ statements:
         yyerror("Missing semicolon after statement.");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid syntax in statements.");
-        yyerrok;
-    }
+
     ;
 
 statement:
@@ -144,11 +128,7 @@ statement:
         { printf("statement -> READ vars\n"); }
     | WRITE vars
         { printf("statement -> WRITE vars\n"); }
-    | IF condition THEN statements error
-    {
-        yyerror("Missing 'ENDIF' in IF statement.");
-        yyerrok; 
-    }
+ 
     | IF condition THEN error ENDIF
     {
         yyerror("Invalid statements block in IF statement.");
@@ -174,11 +154,7 @@ statement:
         yyerror("Invalid variables in WRITE statement.");
         yyerrok;
     }
-    | error
-    {
-        yyerror("Invalid syntax in statement.");
-        yyerrok; 
-    }
+ 
     ;
 
 condition:
@@ -214,11 +190,7 @@ condition:
         yyerror("Invalid or missing comparison operator in condition.");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid syntax in condition.");
-        yyerrok;
-    }
+ 
     ;
 
 comp_op:
@@ -234,11 +206,7 @@ comp_op:
         { printf("comp_op -> GT\n"); }
     | GTE
         { printf("comp_op -> GTE\n"); }
-    | error
-    {
-        yyerror("Invalid comparison operator.");
-        yyerrok;
-    }
+
     ;
 
 expression:
@@ -258,11 +226,7 @@ expression:
         yyerror("Invalid or missing operand after '-'");
         yyerrok;
     }
-    | error
-    {
-        yyerror("Invalid expression syntax");
-        yyerrok; 
-    }
+ 
     ;
 
 term:
@@ -282,11 +246,7 @@ term:
         yyerror("Invalid or missing operand after '/'");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid term syntax");
-        yyerrok;
-    }
+  
     ;
 
 factor:
@@ -308,11 +268,7 @@ factor:
     }
     | array_subscript
         { printf("factor -> array_subscript\n"); }
-    | error
-    {
-        yyerror("Invalid factor syntax");
-        yyerrok; 
-    }
+  
     ;
 
 var:
@@ -320,11 +276,7 @@ var:
         { printf("var -> IDENT\n"); }
     | array_subscript
         { printf("var -> array_subscript\n"); }
-    | error
-    {
-        yyerror("Invalid variable syntax");
-        yyerrok;
-    }
+ 
     ;
 
 array_subscript:
@@ -340,11 +292,7 @@ array_subscript:
         yyerror("Missing closing parenthesis in array subscript");
         yyerrok; 
     }
-    | error
-    {
-        yyerror("Invalid array subscript syntax");
-        yyerrok;
-    }
+
     ;
 
 vars:
@@ -357,11 +305,7 @@ vars:
         yyerror("Invalid variable after ','");
         yyerrok;
     }
-    | error
-    {
-        yyerror("Invalid variable list syntax");
-        yyerrok;
-    }
+  
     ;
 
 
@@ -379,59 +323,9 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-int yylex() {
-    int c;
 
-    while ((c = getchar()) != EOF) {
-        // Increment position for non-newline characters
-        currPos++;
-
-        // Handle newlines
-        if (c == '\n') {
-            currLine++;
-            currPos = 1; // Reset position at the start of a new line
-        }
-
-        // Skip whitespaces
-        if (isspace(c)) {
-            continue;
-        }
-
-        // Handle identifiers (multi-character)
-        if (isalpha(c)) {
-            char buffer[256]; // Adjust size as needed
-            int i = 0;
-            do {
-                buffer[i++] = c;
-                c = getchar();
-            } while (isalnum(c) && i < sizeof(buffer) - 1);
-            buffer[i] = '\0';
-            ungetc(c, stdin); // Push back the last character
-            yylval.sval = strdup(buffer); // Allocate memory
-            return IDENT;
-        }
-
-        // Handle numbers (multi-digit)
-        if (isdigit(c)) {
-            int value = 0;
-            do {
-                value = value * 10 + (c - '0');
-                c = getchar();
-            } while (isdigit(c));
-            ungetc(c, stdin); // Push back the last character
-            yylval.ival = value;
-            return NUMBER;
-        }
-
-        // Handle unrecognized characters
-        fprintf(stderr, "Unrecognized character '%c' at line %d, position %d\n", c, currLine, currPos);
-        return 0; // Or a specific token for invalid input
-    }
-
-    return 0; // EOF
-}
 
 // Error handling function
 void yyerror(const char *msg) {
-    fprintf(stderr, "Syntax error: %s at line %d, position %d\n", msg, currLine, currPos);
+    fprintf(stderr, "Syntax error: %s at line %d, position %d\n", msg, yylineno, column);
 }
