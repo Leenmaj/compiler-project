@@ -12,7 +12,7 @@ extern int column;
 int currPos = 1;   // Define currPos
 %}
 
-%define parse.error verbose
+
 
 %union {
     int ival;
@@ -79,12 +79,7 @@ declarations:
         yyerror("Missing semicolon after declaration.");
         yyerrok; 
     }
-  | identifiers error 
-        {
-            yyerror("invalid declaration");
-            yyerrok;  // Recover from the error
-        }
-
+ 
   
     ;
 
